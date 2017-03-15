@@ -16,8 +16,8 @@ class Retirement(object):
         self.lump_sums = []
 
 
-class LumpSum(object):
-    """Represents a lump sum of retirement money.
+class Account(object):
+    """Represents an retirement account.
 
     Call the constructor with the initial amount of money in the account.
     Then call compute_future_value() to compute how much money the account
@@ -29,23 +29,51 @@ class LumpSum(object):
         initial_value: Initial value.
         roth: Roth?  True or False
         future_value: Last computed future value.
+        interest: Interest rate, in percent.
+        years: Years
+        inflation: Inflation rate, in percent.
+        final_interest: Final interest rate.  Defaults to None.
     """
-    def __init__(self, name="401(k)", initial_value=Decimal('0.0'), roth=False):
+    def __init__(self,
+                 name="401(k)",
+                 initial_value=Decimal('0'),
+                 roth=False,
+                 interest=Decimal('0'),
+                 years=Decimal('0'),
+                 inflation=DEFAULT_INFLATION,
+                 final_interest=None):
         """Constructor.
 
         :param name: Name of the fund.
         :param initial_value: Initial value.
         :param roth: Roth?  True or False
+        :param interest: Interest rate, in percent.
+        :param years: Years
+        :param inflation: Inflation rate, in percent.
+        :param final_interest: Final interest rate.  Defaults to normal interest rate.
         """
         self.name = name
         self.initial_value = initial_value
         self.roth = roth
         self.future_value = None
+        self.interest = interest
+        self.years = years
+        self.inflation = inflation
+        self._final_interest = final_interest
+
+    @property
+    def final_interest(self):
+        """Return final interest rate.  If not set, return the normal interest rate."""
+        return self._final_interest or self.interest
+
+    @final_interest.setter
+    def final_interest(self, value):
+        self._final_interest = value
 
     def __str__(self):
         """Returns LumpSum as a human readable string.
 
-        >>> str(LumpSum(name="401(k)", initial_value=Decimal('100000.00'), roth=False))
+        >>> str(Account(name="401(k)", initial_value=Decimal('100000.00'), roth=False))
         'name=401(k), initial_value=100000.00, roth=False'
         """
         return 'name={0}, initial_value={1}, roth={2}'.format(self.name, self.initial_value, self.roth)
@@ -53,7 +81,7 @@ class LumpSum(object):
     def __repr__(self):
         """Returns LumpSum with more debug info.
 
-        >>> repr(LumpSum(name="401(k)", initial_value=Decimal('100000.00'), roth=False))
+        >>> repr(Account(name="401(k)", initial_value=Decimal('100000.00'), roth=False))
         "LumpSum(name=401(k), initial_value=Decimal('100000.00'), roth=False)"
         """
         return '{0}(name={1}, initial_value={2}, roth={3})'.format(self.__class__.__name__,
@@ -61,7 +89,7 @@ class LumpSum(object):
                                                                    repr(self.initial_value),
                                                                    self.roth)
 
-    def compute_future_value(self, interest, years, inflation=DEFAULT_INFLATION, final_interest=None):
+    def compute_future_value(self):
         """Computes the future value of the lump sum.
 
         The future value is represented in todays dollars.
@@ -71,18 +99,13 @@ class LumpSum(object):
         the intial interest rate to the final.  This is used to simulate the fact that as
         you get older, you shift your money to less risky investments.
 
-        :param interest: Interest rate, in percent.
-        :param years: Years
-        :param inflation: Inflation rate, in percent.
-        :param final_interest: Final interest rate.  Defaults to None.
         :return: Future value.
         """
-        final_interest = final_interest or interest
-        converted_interest_rate = self._convert_interest_rate(interest)
-        converted_inflation_rate = self._convert_interest_rate(inflation)
-        converted_final_rate = self._convert_interest_rate(final_interest)
+        converted_interest_rate = self._convert_interest_rate(self.interest)
+        converted_inflation_rate = self._convert_interest_rate(self.inflation)
+        converted_final_rate = self._convert_interest_rate(self.final_interest)
         average_interest = (converted_interest_rate + converted_final_rate) / Decimal('2')
-        self.future_value = self.initial_value * (average_interest / converted_inflation_rate) ** years
+        self.future_value = self.initial_value * (average_interest / converted_inflation_rate) ** self.years
         return self.future_value
 
     @staticmethod
