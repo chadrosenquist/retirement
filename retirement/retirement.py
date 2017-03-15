@@ -6,6 +6,8 @@ from decimal import Decimal
 
 
 DEFAULT_INFLATION = Decimal('2.0')
+DEFAULT_FEDERAL_TAX_RATE = Decimal('25.0')
+DEFAULT_STATE_TAX_RATE = Decimal('3.75')
 
 
 class Retirement(object):
@@ -14,6 +16,30 @@ class Retirement(object):
     """
     def __init__(self):
         self.lump_sums = []
+
+
+class AccountCommon(object):
+    """Represents factors common to all retirement accounts in a portfolio.
+
+    Attributes
+    ----------
+        inflation: Inflation rate, in percent.
+        federal_tax_rate: Federal tax rate.
+        state_tax_rate: State tax rate.
+    """
+    def __init__(self,
+                 inflation=DEFAULT_INFLATION,
+                 federal_tax_rate=DEFAULT_FEDERAL_TAX_RATE,
+                 state_tax_rate=DEFAULT_STATE_TAX_RATE):
+        """Constructor
+
+        :param inflation: Interest rate.  Defaults to  DEFAULT_INFLATION.
+        :param federal_tax_rate: Federal tax rate.  Defaults to DEFAULT_FEDERAL_TAX_RATE.
+        :param state_tax_rate: State tax rate.  Defaults to DEFAULT_STATE_TAX_RATE.
+        """
+        self.inflation = inflation
+        self.federal_tax_rate = federal_tax_rate
+        self.state_tax_rate = state_tax_rate
 
 
 class Account(object):
@@ -31,7 +57,6 @@ class Account(object):
         future_value: Last computed future value.
         interest: Interest rate, in percent.
         years: Years
-        inflation: Inflation rate, in percent.
         final_interest: Final interest rate.  Defaults to None.
     """
     def __init__(self,
@@ -40,8 +65,8 @@ class Account(object):
                  roth=False,
                  interest=Decimal('0'),
                  years=Decimal('0'),
-                 inflation=DEFAULT_INFLATION,
-                 final_interest=None):
+                 final_interest=None,
+                 common=None):
         """Constructor.
 
         :param name: Name of the fund.
@@ -49,8 +74,8 @@ class Account(object):
         :param roth: Roth?  True or False
         :param interest: Interest rate, in percent.
         :param years: Years
-        :param inflation: Inflation rate, in percent.
         :param final_interest: Final interest rate.  Defaults to normal interest rate.
+        :param common: AccountCommon object.  Values common to all accounts.
         """
         self.name = name
         self.initial_value = initial_value
@@ -58,7 +83,7 @@ class Account(object):
         self.future_value = None
         self.interest = interest
         self.years = years
-        self.inflation = inflation
+        self.common = common or AccountCommon()
         self._final_interest = final_interest
 
     @property
@@ -102,7 +127,7 @@ class Account(object):
         :return: Future value.
         """
         converted_interest_rate = self._convert_interest_rate(self.interest)
-        converted_inflation_rate = self._convert_interest_rate(self.inflation)
+        converted_inflation_rate = self._convert_interest_rate(self.common.inflation)
         converted_final_rate = self._convert_interest_rate(self.final_interest)
         average_interest = (converted_interest_rate + converted_final_rate) / Decimal('2')
         self.future_value = self.initial_value * (average_interest / converted_inflation_rate) ** self.years
@@ -111,3 +136,19 @@ class Account(object):
     @staticmethod
     def _convert_interest_rate(rate):
         return Decimal('1.0') + rate / Decimal('100')
+
+    @staticmethod
+    def convert_value_to_aftertax(value, common):
+        """Apply estimated taxes to the value.
+
+        :param value: The value of the account.
+        :param common: AccountCommon object.  Holds the federal and state taxes.
+        :return: The value after taxes are taken out.
+        """
+        federal_taxes = value * common.federal_tax_rate / Decimal('100')
+        state_taxes = value * common.state_tax_rate / Decimal('100')
+        return value - federal_taxes - state_taxes
+
+    @staticmethod
+    def convert_value_to_pretax(value, common):
+        pass
