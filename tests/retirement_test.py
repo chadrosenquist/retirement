@@ -1,5 +1,6 @@
 import unittest
 from decimal import Decimal
+from decimal import localcontext
 
 from retirement import Retirement
 from retirement import Account
@@ -76,12 +77,14 @@ class AccountTaxTestCase(unittest.TestCase):
                                 common=self.common)
 
     def test_convert_value_to_aftertax(self):
+        """Test money after federal and state taxes."""
         self.assertEqual(Decimal('7500'),
                          Account.convert_value_to_aftertax(Decimal('10000'), self.common))
 
     def test_convert_value_to_pretax(self):
-        # TO DO
-        pass
+        """Test money before federal and state taxes."""
+        self.assertEqual(Decimal('13333.33333333333333333333333'),
+                         Account.convert_value_to_pretax(Decimal('10000'), self.common))
 
     def test_convert_to_aftertax(self):
         self.account1.compute_future_value()

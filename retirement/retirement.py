@@ -138,17 +138,24 @@ class Account(object):
         return Decimal('1.0') + rate / Decimal('100')
 
     @staticmethod
-    def convert_value_to_aftertax(value, common):
+    def convert_value_to_aftertax(pretax_value, common):
         """Apply estimated taxes to the value.
 
-        :param value: The value of the account.
+        :param pretax_value: The value of the account, before taxes.
         :param common: AccountCommon object.  Holds the federal and state taxes.
         :return: The value after taxes are taken out.
         """
-        federal_taxes = value * common.federal_tax_rate / Decimal('100')
-        state_taxes = value * common.state_tax_rate / Decimal('100')
-        return value - federal_taxes - state_taxes
+        federal_taxes = pretax_value * common.federal_tax_rate / Decimal('100')
+        state_taxes = pretax_value * common.state_tax_rate / Decimal('100')
+        return pretax_value - federal_taxes - state_taxes
 
     @staticmethod
-    def convert_value_to_pretax(value, common):
-        pass
+    def convert_value_to_pretax(aftertax_value, common):
+        """Figures out value before taxes were taken out.
+
+        :param aftertax_value: The value of the account, after taxes
+        :param common: AccountCommon object.  Holds the federal and state taxes.
+        :return: The value before taxes were taken out.
+        """
+        divisor = (Decimal('100') - common.federal_tax_rate - common.state_tax_rate) / Decimal('100')
+        return aftertax_value / divisor
