@@ -2,12 +2,13 @@ import unittest
 from decimal import Decimal
 from decimal import localcontext
 
+from tests.assertequaldec import AssertEqualDec
 from retirement import Retirement
 from retirement import Account
 from retirement import AccountCommon
 
 
-class RetirementTestCase(unittest.TestCase):
+class RetirementTestCase(AssertEqualDec):
     def test_simple_lump_sum(self):
         """Tests a simple lump sum, compounded annually."""
         retire = Retirement()
@@ -15,7 +16,7 @@ class RetirementTestCase(unittest.TestCase):
         # TO DO: Add tests!
 
 
-class AccountTestCase(unittest.TestCase):
+class AccountTestCase(AssertEqualDec):
     def setUp(self):
         self.common = AccountCommon(inflation=Decimal('2.0'))
         self.account = Account(name="401(k)",
@@ -59,7 +60,7 @@ class AccountTestCase(unittest.TestCase):
         self.assertEqual(Decimal('153990.6528265677899626287748'), future_value)
 
 
-class AccountTaxTestCase(unittest.TestCase):
+class AccountTaxTestCase(AssertEqualDec):
     """Tests related to pre and post tax.
 
     The two test accounts, normal_401k and roth_401k, both have the same
@@ -104,6 +105,8 @@ class AccountTaxTestCase(unittest.TestCase):
         self.roth_401k.compute_future_value()
         self.assertEqual(Decimal('133626.0937752649637487276288'), self.normal_401k.future_value_pretax())
         self.assertEqual(Decimal('178168.1250336866183316368384'), self.roth_401k.future_value_pretax())
+        self.assertEqualDec(Decimal('133626.09'), self.normal_401k.future_value_pretax())
+        self.assertEqualDec(Decimal('178168.13'), self.roth_401k.future_value_pretax())
 
 if __name__ == '__main__':
     unittest.main()
