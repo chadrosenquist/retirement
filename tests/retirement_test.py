@@ -60,21 +60,26 @@ class AccountTestCase(unittest.TestCase):
 
 
 class AccountTaxTestCase(unittest.TestCase):
-    """Tests related to pre and post tax."""
+    """Tests related to pre and post tax.
+
+    The two test accounts, normal_401k and roth_401k, both have the same
+    amount of money.  But because one is a normal 401(k) and the other is a Roth,
+    their values before and after taxes are different.
+    """
     def setUp(self):
         self.common = AccountCommon(inflation=Decimal('2.0'),
                                     federal_tax_rate=Decimal('20.0'),
                                     state_tax_rate=Decimal('5.0'))
-        self.account1 = Account(roth=False,
-                                initial_value=Decimal('100000'),
-                                years=10,
-                                interest=Decimal('5.0'),
-                                common=self.common)
-        self.account2 = Account(roth=True,
-                                initial_value=Decimal('100000'),
-                                years=10,
-                                interest=Decimal('5.0'),
-                                common=self.common)
+        self.normal_401k = Account(roth=False,
+                                   initial_value=Decimal('100000'),
+                                   years=10,
+                                   interest=Decimal('5.0'),
+                                   common=self.common)
+        self.roth_401k = Account(roth=True,
+                                 initial_value=Decimal('100000'),
+                                 years=10,
+                                 interest=Decimal('5.0'),
+                                 common=self.common)
 
     def test_convert_value_to_aftertax(self):
         """Test money after federal and state taxes."""
@@ -87,14 +92,18 @@ class AccountTaxTestCase(unittest.TestCase):
                          Account.convert_value_to_pretax(Decimal('10000'), self.common))
 
     def test_convert_to_aftertax(self):
-        self.account1.compute_future_value()
-        self.account2.compute_future_value()
-        # TO DO
+        """Compare after tax."""
+        self.normal_401k.compute_future_value()
+        self.roth_401k.compute_future_value()
+        self.assertEqual(Decimal('100219.5703314487228115457216'), self.normal_401k.future_value_aftertax())
+        self.assertEqual(Decimal('133626.0937752649637487276288'), self.roth_401k.future_value_aftertax())
 
     def test_convert_to_pretax(self):
-        self.account1.compute_future_value()
-        self.account2.compute_future_value()
-        # TO DO
+        """Compare pre tax."""
+        self.normal_401k.compute_future_value()
+        self.roth_401k.compute_future_value()
+        self.assertEqual(Decimal('133626.0937752649637487276288'), self.normal_401k.future_value_pretax())
+        self.assertEqual(Decimal('178168.1250336866183316368384'), self.roth_401k.future_value_pretax())
 
 if __name__ == '__main__':
     unittest.main()

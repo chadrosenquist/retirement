@@ -159,3 +159,30 @@ class Account(object):
         """
         divisor = (Decimal('100') - common.federal_tax_rate - common.state_tax_rate) / Decimal('100')
         return aftertax_value / divisor
+
+    def future_value_aftertax(self):
+        """Returns the future value of the account, after taxes.
+
+        If the account is a Roth, the future value is simply returned.
+        If the account is a traditional pre-tax account, then estimated state and federal
+        taxes are taken out.
+
+        :return: Future value, after taxes.
+        """
+        if self.roth:
+            return self.future_value
+        else:
+            return self.convert_value_to_aftertax(self.future_value, self.common)
+
+    def future_value_pretax(self):
+        """Returns the future value of the account, pre tax.
+
+        If the account is a Roth, the estimated federal and state taxes are added.
+        If the account is a traditional pre-tax account, the future value is simply returned.
+
+        :return: Future value, pre tax.
+        """
+        if self.roth:
+            return self.convert_value_to_pretax(self.future_value, self.common)
+        else:
+            return self.future_value
